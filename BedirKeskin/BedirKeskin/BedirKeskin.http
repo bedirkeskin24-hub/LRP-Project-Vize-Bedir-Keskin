@@ -1,0 +1,6 @@
+@BedirKeskin_HostAddress = http://localhost:5269
+
+GET {{BedirKeskin_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

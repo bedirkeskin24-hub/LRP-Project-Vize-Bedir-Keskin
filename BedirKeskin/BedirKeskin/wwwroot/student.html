@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci Paneli</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="app.js"></script>
+</head>
+<body data-role="Student">
+    <header>
+        <h1>Öğrenci Paneli</h1>
+        <button id="logoutBtn">Çıkış</button>
+    </header>
+
+    <main>
+        <section>
+            <h2>Sorumlu Olduğum Bilgisayarlar</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kod</th>
+                        <th>Lab</th>
+                        <th>Marka</th>
+                        <th>İşlemci</th>
+                        <th>RAM</th>
+                        <th>HDMI</th>
+                        <th>Veyon</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTable"></tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>

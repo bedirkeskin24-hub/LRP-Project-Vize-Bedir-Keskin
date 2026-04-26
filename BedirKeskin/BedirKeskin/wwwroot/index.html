@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="app.js"></script>
+</head>
+<body data-role="Admin">
+    <header>
+        <h1>Admin Panel</h1>
+        <button id="logoutBtn">Çıkış</button>
+    </header>
+
+    <main class="layout">
+        <section>
+            <h2>Laboratuvar İşlemleri</h2>
+            <form id="labForm">
+                <input id="labId" type="hidden">
+                <label>Laboratuvar kodu</label>
+                <input id="labCode" type="text" placeholder="LAB1" required>
+
+                <label>Laboratuvar adı</label>
+                <input id="labName" type="text" placeholder="Bilgisayar Laboratuvarı 1" required>
+
+                <button type="submit">Kaydet</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kod</th>
+                        <th>Ad</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="labTable"></tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Bilgisayar İşlemleri</h2>
+            <form id="pcForm">
+                <label>Laboratuvar</label>
+                <select id="pcLab" required></select>
+
+                <label>Marka</label>
+                <input id="pcBrand" type="text" required>
+
+                <label>İşlemci</label>
+                <input id="pcCpu" type="text" required>
+
+                <label>RAM</label>
+                <input id="pcRam" type="text" required>
+
+                <label>Sorumlu öğrenci</label>
+                <input id="pcStudent" type="text" placeholder="student" required>
+
+                <div class="check-row">
+                    <label><input id="pcHdmi" type="checkbox"> HDMI</label>
+                    <label><input id="pcVeyon" type="checkbox"> Veyon</label>
+                </div>
+
+                <button type="submit">Bilgisayar Ekle</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kod</th>
+                        <th>Lab</th>
+                        <th>Marka</th>
+                        <th>İşlemci</th>
+                        <th>RAM</th>
+                        <th>HDMI</th>
+                        <th>Veyon</th>
+                        <th>Öğrenci</th>
+                    </tr>
+                </thead>
+                <tbody id="pcTable"></tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
