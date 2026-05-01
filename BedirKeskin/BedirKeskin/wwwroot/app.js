@@ -1,43 +1,12 @@
-const users = [
-    { username: "admin", password: "123", role: "Admin" },
-    { username: "student", password: "123", role: "Student" }
-];
-
-const sampleData = {
-    labs: [
-        { id: 1, code: "LAB1", name: "Bilgisayar Laboratuvarı 1" }
-    ],
-    pcs: [
-        {
-            id: 1,
-            code: "LAB1-PC-01",
-            labCode: "LAB1",
-            brand: "Lenovo",
-            cpu: "i5",
-            ram: "8 GB",
-            hdmi: true,
-            veyon: true,
-            student: "student"
-        }
-    ]
-};
-
-function getData() {
-    const saved = localStorage.getItem("labData");
-    if (saved) {
-        return JSON.parse(saved);
-    }
-    localStorage.setItem("labData", JSON.stringify(sampleData));
-    return sampleData;
-}
-
-function setData(data) {
-    localStorage.setItem("labData", JSON.stringify(data));
-}
+const api = "/api";
 
 function getUser() {
-    const saved = localStorage.getItem("activeUser");
+    const saved = sessionStorage.getItem("activeUser");
     return saved ? JSON.parse(saved) : null;
+}
+
+function setUser(user) {
+    sessionStorage.setItem("activeUser", JSON.stringify(user));
 }
 
 function checkAuth() {
@@ -57,25 +26,41 @@ function checkAuth() {
     }
 }
 
+async function request(url, options) {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: "İşlem başarısız." }));
+        throw new Error(error.message || "İşlem başarısız.");
+    }
+    return response.json();
+}
+
 function login() {
     const form = document.getElementById("loginForm");
     if (!form) {
         return;
     }
 
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-        const user = users.find(x => x.username === username && x.password === password);
+        const message = document.getElementById("loginMessage");
+        message.textContent = "";
 
-        if (!user) {
-            document.getElementById("loginMessage").textContent = "Kullanıcı adı veya şifre hatalı.";
-            return;
+        try {
+            const user = await request(`${api}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: document.getElementById("username").value.trim(),
+                    password: document.getElementById("password").value.trim()
+                })
+            });
+
+            setUser(user);
+            location.href = user.role === "Admin" ? "index.html" : "student.html";
+        } catch (error) {
+            message.textContent = error.message;
         }
-
-        localStorage.setItem("activeUser", JSON.stringify({ username: user.username, role: user.role }));
-        location.href = user.role === "Admin" ? "index.html" : "student.html";
     });
 }
 
@@ -86,31 +71,35 @@ function logout() {
     }
 
     button.addEventListener("click", function () {
-        localStorage.removeItem("activeUser");
+        sessionStorage.removeItem("activeUser");
         location.href = "login.html";
     });
 }
 
-function renderLabs() {
+async function loadLabs() {
     const table = document.getElementById("labTable");
     const select = document.getElementById("pcLab");
     if (!table || !select) {
         return;
     }
 
-    const data = getData();
+    const labs = await request(`${api}/labs`);
     table.innerHTML = "";
     select.innerHTML = "";
 
-    data.labs.forEach(function (lab) {
+    labs.forEach(function (lab) {
         table.innerHTML += `
             <tr>
                 <td>${lab.code}</td>
                 <td>${lab.name}</td>
-                <td><button class="table-btn" onclick="editLab(${lab.id})">Düzenle</button></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editLab(${lab.id}, '${lab.code}', '${lab.name}')">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </td>
             </tr>
         `;
-        select.innerHTML += `<option value="${lab.code}">${lab.code} - ${lab.name}</option>`;
+        select.innerHTML += `<option value="${lab.id}">${lab.code} - ${lab.name}</option>`;
     });
 }
 
@@ -120,134 +109,230 @@ function saveLab() {
         return;
     }
 
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        const data = getData();
         const id = document.getElementById("labId").value;
-        const code = document.getElementById("labCode").value.trim().toUpperCase();
-        const name = document.getElementById("labName").value.trim();
+        const data = {
+            code: document.getElementById("labCode").value.trim(),
+            name: document.getElementById("labName").value.trim()
+        };
 
-        if (id) {
-            const lab = data.labs.find(x => x.id == id);
-            const oldCode = lab.code;
-            lab.code = code;
-            lab.name = name;
-            data.pcs.forEach(function (pc) {
-                if (pc.labCode === oldCode) {
-                    pc.labCode = code;
-                    pc.code = pc.code.replace(oldCode, code);
-                }
-            });
-        } else {
-            data.labs.push({ id: Date.now(), code, name });
-        }
+        await request(id ? `${api}/labs/${id}` : `${api}/labs`, {
+            method: id ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
 
-        setData(data);
         form.reset();
         document.getElementById("labId").value = "";
-        renderLabs();
-        renderPcs();
+        await loadLabs();
+        await loadComputers();
     });
 }
 
-function editLab(id) {
-    const data = getData();
-    const lab = data.labs.find(x => x.id === id);
-    document.getElementById("labId").value = lab.id;
-    document.getElementById("labCode").value = lab.code;
-    document.getElementById("labName").value = lab.name;
+function editLab(id, code, name) {
+    document.getElementById("labId").value = id;
+    document.getElementById("labCode").value = code;
+    document.getElementById("labName").value = name;
 }
 
-function nextPcCode(labCode) {
-    const data = getData();
-    const count = data.pcs.filter(x => x.labCode === labCode).length + 1;
-    return `${labCode}-PC-${String(count).padStart(2, "0")}`;
-}
-
-function savePc() {
+function saveComputer() {
     const form = document.getElementById("pcForm");
     if (!form) {
         return;
     }
 
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        const data = getData();
-        const labCode = document.getElementById("pcLab").value;
+        const studentNo = document.getElementById("pcStudentNo").value.trim();
+        const fullName = document.getElementById("pcStudentName").value.trim();
 
-        data.pcs.push({
-            id: Date.now(),
-            code: nextPcCode(labCode),
-            labCode,
-            brand: document.getElementById("pcBrand").value.trim(),
-            cpu: document.getElementById("pcCpu").value.trim(),
-            ram: document.getElementById("pcRam").value.trim(),
-            hdmi: document.getElementById("pcHdmi").checked,
-            veyon: document.getElementById("pcVeyon").checked,
-            student: document.getElementById("pcStudent").value.trim()
+        if ((studentNo && !fullName) || (!studentNo && fullName)) {
+            alert("Öğrenci hesabı oluşturmak için öğrenci no ve ad soyad birlikte girilmelidir.");
+            return;
+        }
+
+        await request(`${api}/computers`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                labId: Number(document.getElementById("pcLab").value),
+                brand: document.getElementById("pcBrand").value.trim(),
+                cpu: document.getElementById("pcCpu").value.trim(),
+                ram: document.getElementById("pcRam").value.trim(),
+                hasHdmi: document.getElementById("pcHdmi").checked,
+                hasVeyon: document.getElementById("pcVeyon").checked,
+                studentNo,
+                fullName
+            })
         });
 
-        setData(data);
         form.reset();
-        renderPcs();
+        await loadComputers();
+        await loadStudents();
     });
 }
 
-function renderPcs() {
+async function loadComputers() {
     const table = document.getElementById("pcTable");
+    const assignSelect = document.getElementById("assignPc");
+    if (!table && !assignSelect) {
+        return;
+    }
+
+    const computers = await request(`${api}/computers`);
+
+    if (table) {
+        table.innerHTML = "";
+        computers.forEach(function (pc) {
+            const student = pc.studentNo ? `${pc.studentNo} - ${pc.studentName}` : "Atanmadı";
+            table.innerHTML += `
+                <tr>
+                    <td>${pc.assetCode}</td>
+                    <td>${pc.labCode}</td>
+                    <td>${pc.brand}</td>
+                    <td>${pc.cpu}</td>
+                    <td>${pc.ram}</td>
+                    <td>${pc.hasHdmi ? "Var" : "Yok"}</td>
+                    <td>${pc.hasVeyon ? "Var" : "Yok"}</td>
+                    <td>${student}</td>
+                </tr>
+            `;
+        });
+    }
+
+    if (assignSelect) {
+        assignSelect.innerHTML = "";
+        computers.forEach(function (pc) {
+            assignSelect.innerHTML += `<option value="${pc.id}">${pc.assetCode} - ${pc.brand}</option>`;
+        });
+    }
+}
+
+function saveAssignment() {
+    const form = document.getElementById("assignForm");
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const message = document.getElementById("assignMessage");
+        message.textContent = "";
+        message.classList.remove("text-danger");
+        message.classList.add("text-success");
+
+        try {
+            const result = await request(`${api}/assignments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    computerId: Number(document.getElementById("assignPc").value),
+                    studentNo: document.getElementById("studentNo").value.trim(),
+                    fullName: document.getElementById("studentName").value.trim()
+                })
+            });
+
+            form.reset();
+            message.textContent = result.message;
+            await loadComputers();
+            await loadStudents();
+        } catch (error) {
+            message.classList.remove("text-success");
+            message.classList.add("text-danger");
+            message.textContent = error.message;
+        }
+    });
+}
+
+async function loadStudents() {
+    const table = document.getElementById("studentAccountTable");
     if (!table) {
         return;
     }
 
-    const data = getData();
+    const students = await request(`${api}/students`);
     table.innerHTML = "";
-    data.pcs.forEach(function (pc) {
+
+    students.forEach(function (student) {
         table.innerHTML += `
             <tr>
-                <td>${pc.code}</td>
-                <td>${pc.labCode}</td>
-                <td>${pc.brand}</td>
-                <td>${pc.cpu}</td>
-                <td>${pc.ram}</td>
-                <td>${pc.hdmi ? "Var" : "Yok"}</td>
-                <td>${pc.veyon ? "Var" : "Yok"}</td>
-                <td>${pc.student}</td>
+                <td>${student.studentNo}</td>
+                <td>${student.fullName}</td>
+                <td>${student.username}</td>
+                <td>${student.password}</td>
             </tr>
         `;
     });
 }
 
-function renderStudent() {
+async function loadStudentComputers() {
     const table = document.getElementById("studentTable");
-    if (!table) {
+    const info = document.getElementById("studentInfo");
+    const title = document.getElementById("studentNameTitle");
+    const count = document.getElementById("studentComputerCount");
+    if (!table || !info) {
         return;
     }
 
     const user = getUser();
-    const data = getData();
-    const pcs = data.pcs.filter(x => x.student.toLowerCase() === user.username.toLowerCase());
+    if (title) {
+        title.textContent = user.fullName || "Zimmet Bilgilerim";
+    }
+
+    info.innerHTML = `
+        <span><i class="fa-solid fa-hashtag me-1"></i>${user.studentNo}</span>
+        <span><i class="fa-solid fa-user me-1"></i>${user.fullName}</span>
+    `;
+
+    const computers = await request(`${api}/students/${user.studentNo}/computers`);
+    if (count) {
+        count.textContent = computers.length;
+    }
 
     table.innerHTML = "";
-    pcs.forEach(function (pc) {
+
+    if (computers.length === 0) {
+        table.innerHTML = `<tr><td colspan="7" class="text-center text-secondary py-4">Üzerinize kayıtlı bilgisayar bulunamadı.</td></tr>`;
+        return;
+    }
+
+    computers.forEach(function (pc) {
         table.innerHTML += `
             <tr>
-                <td>${pc.code}</td>
+                <td>${pc.assetCode}</td>
                 <td>${pc.labCode}</td>
                 <td>${pc.brand}</td>
                 <td>${pc.cpu}</td>
                 <td>${pc.ram}</td>
-                <td>${pc.hdmi ? "Var" : "Yok"}</td>
-                <td>${pc.veyon ? "Var" : "Yok"}</td>
+                <td>${pc.hasHdmi ? "Var" : "Yok"}</td>
+                <td>${pc.hasVeyon ? "Var" : "Yok"}</td>
             </tr>
         `;
     });
+}
+
+async function startAdmin() {
+    await loadLabs();
+    await loadComputers();
+    await loadStudents();
+    saveLab();
+    saveComputer();
+    saveAssignment();
+}
+
+function startStudent() {
+    loadStudentComputers();
 }
 
 checkAuth();
 login();
 logout();
-renderLabs();
-saveLab();
-savePc();
-renderPcs();
-renderStudent();
+
+if (document.body.dataset.role === "Admin") {
+    startAdmin();
+}
+
+if (document.body.dataset.role === "Student") {
+    startStudent();
+}

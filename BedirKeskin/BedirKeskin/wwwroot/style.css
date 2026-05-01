@@ -1,48 +1,146 @@
-* {
-    box-sizing: border-box;
-}
-
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f3f5f7;
-    color: #222;
+    background: #f4f6f8;
+    color: #1f2933;
 }
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 28px;
-    background: #253447;
+.app {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+}
+
+.sidebar {
+    background: #223044;
     color: white;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-h1, h2 {
+.sidebar h1 {
+    font-size: 22px;
     margin: 0 0 18px;
-    font-weight: 600;
 }
 
-header h1 {
-    margin: 0;
-    font-size: 24px;
+.sidebar a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+.sidebar a:hover {
+    background: #33465f;
+}
+
+.sidebar button {
+    margin-top: auto;
 }
 
 main {
     padding: 24px;
-}
-
-.layout {
     display: grid;
-    grid-template-columns: 1fr 2fr;
     gap: 20px;
+    align-content: start;
 }
 
-section, .login-box {
+.panel, .login-box {
     background: white;
     border: 1px solid #d9dee5;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 20px;
+}
+
+.panel h2 {
+    font-size: 22px;
+    margin-bottom: 18px;
+}
+
+.student-hero {
+    background: #223044;
+    border-radius: 8px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px;
+}
+
+.student-hero h2 {
+    font-size: 26px;
+    margin: 4px 0 10px;
+}
+
+.eyebrow {
+    color: #6b7685;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin: 0 0 4px;
+    text-transform: uppercase;
+}
+
+.student-hero .eyebrow {
+    color: #b7c5d8;
+}
+
+.student-meta {
+    color: #d8e2ef;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.student-meta span {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+    padding: 7px 10px;
+}
+
+.student-stat {
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    display: grid;
+    min-width: 170px;
+    place-items: center;
+    text-align: center;
+}
+
+.student-stat span {
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.student-stat small {
+    color: #d8e2ef;
+}
+
+.section-title-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.section-title-row h2 {
+    margin: 0;
+}
+
+.status-pill {
+    background: #e8f5ee;
+    border: 1px solid #bfe5cf;
+    border-radius: 999px;
+    color: #187042;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 11px;
+    white-space: nowrap;
 }
 
 .login-page {
@@ -52,89 +150,11 @@ section, .login-box {
 }
 
 .login-box {
-    width: min(380px, calc(100% - 32px));
+    width: min(390px, calc(100% - 32px));
 }
 
-form {
-    display: grid;
-    gap: 10px;
-    margin-bottom: 18px;
-}
-
-label {
-    font-size: 14px;
-}
-
-input, select, button {
-    width: 100%;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #c8ced6;
-    font-size: 15px;
-}
-
-button {
-    cursor: pointer;
-    background: #253447;
-    color: white;
-    border: 0;
-}
-
-button:hover {
-    background: #354a63;
-}
-
-header button {
-    width: auto;
-    padding: 9px 16px;
-    background: #d94141;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-}
-
-th, td {
-    padding: 10px;
-    border-bottom: 1px solid #e1e5ea;
-    text-align: left;
-    font-size: 14px;
-}
-
-th {
-    background: #eef2f6;
-}
-
-.table-btn {
-    padding: 7px 10px;
-    font-size: 13px;
-}
-
-.check-row {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-.check-row input {
-    width: auto;
-}
-
-.small, #loginMessage {
-    font-size: 13px;
-    color: #666;
-}
-
-#loginMessage {
-    min-height: 18px;
-    margin: 0;
-    color: #d94141;
-}
-
-@media (max-width: 850px) {
-    .layout {
+@media (max-width: 900px) {
+    .app {
         grid-template-columns: 1fr;
     }
 
@@ -142,8 +162,13 @@ th {
         padding: 14px;
     }
 
-    table {
-        display: block;
-        overflow-x: auto;
+    .student-hero,
+    .section-title-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .student-stat {
+        min-height: 100px;
     }
 }
